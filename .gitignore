@@ -23,3 +23,6 @@ Thumbs.db
 
 # Local developer notes (kept out of the public repository)
 AGENTS.md
+
+# Generated instance suites (recreate with: python3 -m src.generation.suite)
+data/instances_*.json
