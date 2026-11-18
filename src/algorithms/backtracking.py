@@ -102,7 +102,6 @@ def backtracking(
         nodes += 1
         check_timeout()
         dish = ordered[index]
-        print(f"domain:{dish.domain}")
         for start in dish.domain:
             assignments += 1
             if not _conflicts(dish, start, schedule, dish_by_id):
@@ -125,7 +124,6 @@ def backtracking(
         )
 
     if feasible:
-        print(f"schedule:{schedule}")
         return SolverResult(
             algorithm="backtracking",
             status=SolveStatus.FEASIBLE,
