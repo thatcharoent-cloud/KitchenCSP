@@ -53,6 +53,23 @@ This initial model uses fixed durations, known arrivals and deadlines, one stati
 
 This repository contains Python implementations, unit tests, scenario generation, experimental results, and a reproducible run guide. Exact commands and dependencies are documented as each component is implemented and verified. No experimental results should be claimed before they are measured.
 
+### How to run
+
+Requires Python 3.10 or newer (tested on 3.13). Run every command from the project root.
+
+```bash
+python3 -m pip install -r requirements.txt   # installs pytest
+python3 -m pytest                            # runs all unit tests
+python3 -m src.generation.suite              # generates the instance suites
+```
+
+The last command writes two files:
+
+- `data/instances_random.json`: 240 random instances (some may have no solution).
+- `data/instances_feasible.json`: 240 instances built around a planted valid schedule, so a solution is guaranteed. The planted schedule is stored with each instance but is never given to the solvers.
+
+Each instance has a fixed seed, `n_dishes * 10000 + tightness_index * 1000 + index` (tightness index 0 = tight, 1 = moderate, 2 = loose), so the files are identical on every machine. They are generated rather than committed: re-run the command to recreate them.
+
 ## Research integrity and reproduction
 
 All results in this repository are measured, not assumed. Instances are generated with fixed seeds and their parameters recorded; every returned schedule is checked by an independent validator; greedy failure, proven infeasibility, and timeout are recorded separately and never conflated. Any code or data reused from other projects is cited transparently. Limitations that affect reproducibility are documented rather than hidden.
