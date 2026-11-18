@@ -70,6 +70,22 @@ The last command writes two files:
 
 Each instance has a fixed seed, `n_dishes * 10000 + tightness_index * 1000 + index` (tightness index 0 = tight, 1 = moderate, 2 = loose), so the files are identical on every machine. They are generated rather than committed: re-run the command to recreate them.
 
+### Running the experiment
+
+```bash
+python3 -m src.experiments.run          # all algorithms x 480 instances (~9 min)
+python3 -m src.experiments.summarize    # tables: results/summary.csv, results/random_classes.csv
+python3 -m src.experiments.plot         # figures: results/figures/*.png (needs matplotlib)
+```
+
+Settings used for the reported results: timeout **5000 ms** per algorithm per instance; runtime is the **median of 3 runs** (a timed-out run is not repeated). Quick trial: `python3 -m src.experiments.run --limit 2 --timeout-ms 100`.
+
+`results/raw_results.csv` has one row per (instance, algorithm): status, whether the schedule passed the independent validator, runtime, and search counters. The runner exits with an error if any returned schedule is invalid, if a CSP method claims "infeasible" on an instance with a planted solution, or if a greedy method reports "infeasible"/"timeout".
+
+For the random suite, `random_classes.csv` labels each instance *known feasible* (some algorithm found a valid schedule), *proven infeasible* (an exhaustive CSP search finished without one), or *unknown* (nothing found and every CSP run timed out). "Success rate on solvable" divides by the known-feasible count, so unknown instances are not counted against any algorithm.
+
+MRV + forward checking is picked up automatically once `src/algorithms/mrv_forward_checking.py` defines `mrv_forward_checking(dishes, timeout_ms) -> SolverResult`.
+
 ## Research integrity and reproduction
 
 All results in this repository are measured, not assumed. Instances are generated with fixed seeds and their parameters recorded; every returned schedule is checked by an independent validator; greedy failure, proven infeasibility, and timeout are recorded separately and never conflated. Any code or data reused from other projects is cited transparently. Limitations that affect reproducibility are documented rather than hidden.

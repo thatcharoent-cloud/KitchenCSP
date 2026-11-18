@@ -1,3 +1,4 @@
 # KitchenCSP depends only on the Python standard library at runtime.
 # pytest is the only dev/test dependency; add others only as needed.
 pytest>=8.0
+matplotlib>=3.7   # only for src.experiments.plot
