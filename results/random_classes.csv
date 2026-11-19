@@ -3,11 +3,11 @@ n_dishes,tightness,known_feasible,proven_infeasible,unknown
 5,moderate,19,1,0
 5,loose,20,0,0
 10,tight,3,17,0
-10,moderate,12,7,1
+10,moderate,12,8,0
 10,loose,20,0,0
 15,tight,1,19,0
-15,moderate,9,7,4
-15,loose,18,0,2
+15,moderate,9,9,2
+15,loose,18,1,1
 20,tight,0,20,0
-20,moderate,7,3,10
-20,loose,17,0,3
+20,moderate,8,11,1
+20,loose,18,1,1
