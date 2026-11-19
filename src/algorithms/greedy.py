@@ -12,6 +12,10 @@ Conventions:
     minute after the last scheduled dish.
   * Greedy never revises earlier placements. It never emits INFEASIBLE or
     TIMEOUT; failure to place every dish yields UNSOLVED_GREEDY.
+  * Search counters (comparable with the CSP solvers): nodes_visited counts
+    the dishes attempted by the one-pass placement loop (including a failing
+    dish); attempted_assignments counts the start minutes scanned for each
+    dish, including the accepted one.
 """
 
 from __future__ import annotations
@@ -33,15 +37,21 @@ def _overlaps(previous: Dish, prev_start: int, dish: Dish, start: int) -> bool:
     return start < prev_start + previous.duration and prev_start < start + dish.duration
 
 
-def _earliest_valid_start(dish: Dish, schedule: dict[int, int], dish_by_id: dict[int, Dish]) -> int | None:
-    """Return the smallest t in dish.domain that overlaps no scheduled dish
-    on the same station, or None if the dish cannot be placed anywhere.
+def _earliest_valid_start(
+    dish: Dish, schedule: dict[int, int], dish_by_id: dict[int, Dish]
+) -> tuple[int | None, int]:
+    """Return (best_start, tested).
+
+    best_start is the smallest t in dish.domain that overlaps no scheduled
+    dish on the same station, or None if the dish cannot be placed anywhere.
+    tested is the number of candidate start minutes scanned (including the
+    accepted one, when a start is found).
 
     `schedule` maps dish_id -> start_minute for dishes already placed.
     """
-    
+    tested = 0
     for t in dish.domain:
-        
+        tested += 1
         conflict = False
 
         for placed_id, placed_start in schedule.items():
@@ -56,9 +66,9 @@ def _earliest_valid_start(dish: Dish, schedule: dict[int, int], dish_by_id: dict
                 break
         
         if not conflict:
-            return t
+            return t, tested
 
-    return None
+    return None, tested
 
 
 def _place_all(order: list[Dish], algorithm: str, start_ns: int) -> SolverResult:
@@ -76,23 +86,32 @@ def _place_all(order: list[Dish], algorithm: str, start_ns: int) -> SolverResult
 
     dish_by_id = {d.id: d for d in order}
 
-    for dish in order:
+    nodes_visited = 0
+    attempted = 0
 
-        t = _earliest_valid_start(dish, schedule, dish_by_id)
+    for dish in order:
+        nodes_visited += 1
+
+        t, tested = _earliest_valid_start(dish, schedule, dish_by_id)
+        attempted += tested
         if t is None:
             return SolverResult(
-                algorithm=algorithm, 
-                status=SolveStatus.UNSOLVED_GREEDY, 
-                runtime_ms=(time.perf_counter_ns() - start_ns) / 1_000_000
+                algorithm=algorithm,
+                status=SolveStatus.UNSOLVED_GREEDY,
+                runtime_ms=(time.perf_counter_ns() - start_ns) / 1_000_000,
+                nodes_visited=nodes_visited,
+                attempted_assignments=attempted,
             )
 
         schedule[dish.id] = t
 
     return SolverResult(
-        algorithm=algorithm, 
-        status=SolveStatus.FEASIBLE, 
-        schedule=schedule, 
-        runtime_ms=(time.perf_counter_ns() - start_ns) / 1_000_000
+        algorithm=algorithm,
+        status=SolveStatus.FEASIBLE,
+        schedule=schedule,
+        runtime_ms=(time.perf_counter_ns() - start_ns) / 1_000_000,
+        nodes_visited=nodes_visited,
+        attempted_assignments=attempted,
     )
 
 

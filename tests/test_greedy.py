@@ -19,31 +19,31 @@ def make_dish(id, station, arrival, duration, deadline):
 
 def test_empty_schedule_returns_first_domain_value():
     d = make_dish(1, "wok", arrival=2, duration=3, deadline=10)
-    assert _earliest_valid_start(d, {}, {1:d}) == 2
+    assert _earliest_valid_start(d, {}, {1:d}) == (2, 1)
 
 def test_touching_invervals_are_allow():
     placed = make_dish(1, "wok", arrival=0, duration=4, deadline=10)
     new = make_dish(2, "wok", arrival=0, duration=3, deadline=20)
     dish_by_id = {1: placed, 2: new}
-    assert _earliest_valid_start(new, {1:0}, dish_by_id) == 4
+    assert _earliest_valid_start(new, {1:0}, dish_by_id) == (4, 5)
 
 def test_different_station_does_not_conflict():
     placed = make_dish(1, "wok", arrival=0, duration=4, deadline=10)
     new = make_dish(2, "fryer", arrival=0, duration=3, deadline=20)
     dish_by_id = {1: placed, 2: new}
-    assert _earliest_valid_start(new, {1:0}, dish_by_id) == 0
+    assert _earliest_valid_start(new, {1:0}, dish_by_id) == (0, 1)
 
 def test_fills_earlier_gap():
     placed = make_dish(1, "wok", arrival=10, duration=4, deadline=14)
     new = make_dish(2, "wok", arrival=0, duration=5, deadline=13)
     dish_by_id = {1: placed, 2: new}
-    assert _earliest_valid_start(new, {1:10}, dish_by_id) == 0
+    assert _earliest_valid_start(new, {1:10}, dish_by_id) == (0, 1)
 
 def test_return_none_when_no_start_fits():
     placed = make_dish(1, "wok", arrival=0, duration=10, deadline=10)
     new = make_dish(2, "wok", arrival=1, duration=10, deadline=11)
     dish_by_id = {1: placed, 2: new}
-    assert _earliest_valid_start(new, {1:0}, dish_by_id) is None
+    assert _earliest_valid_start(new, {1:0}, dish_by_id) == (None, 1)
 
 @pytest.mark.parametrize("algo", [fcfs, edf])
 def test_single_dish_starts_at_arrival(algo):
@@ -187,3 +187,37 @@ def test_duplicate_ids_are_rejected():
         fcfs(bad)
     with pytest.raises(ValueError):
         edf(bad)
+
+
+def test_greedy_counters_single_dish():
+    single = [make_dish(1, "wok", 3, 4, 20)]
+    for algo in (fcfs, edf):
+        res = algo(single)
+        assert res.status == SolveStatus.FEASIBLE
+        assert res.nodes_visited == 1
+        assert res.attempted_assignments == 1
+
+
+def test_greedy_counters_on_trap_fcfs():
+    # FCFS order: dish 2 (1 tested), dish 3 (3 tested), dish 1 (2 tested).
+    res = fcfs(TRAP)
+    assert res.status == SolveStatus.UNSOLVED_GREEDY
+    assert res.nodes_visited == 3
+    assert res.attempted_assignments == 6
+
+
+def test_greedy_counters_on_trap_edf():
+    # EDF order: dish 1 (1 tested), dish 2 (4 tested), dish 3 (5 tested).
+    res = edf(TRAP)
+    assert res.status == SolveStatus.UNSOLVED_GREEDY
+    assert res.nodes_visited == 3
+    assert res.attempted_assignments == 10
+
+
+def test_greedy_counters_empty_domain_failure():
+    d = make_dish(1, "wok", 0, 5, 3)
+    for algo in (fcfs, edf):
+        res = algo([d])
+        assert res.status == SolveStatus.UNSOLVED_GREEDY
+        assert res.nodes_visited == 1
+        assert res.attempted_assignments == 0

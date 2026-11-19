@@ -44,17 +44,21 @@ class SolverResult:
         schedule: Mapping dish_id -> start_minute for FEASIBLE results,
             otherwise None.
         runtime_ms: Wall-clock runtime in milliseconds (float).
-        nodes_visited: CSP only -- number of times the recursive search
-            function was entered. 0 for greedy.
-        attempted_assignments: CSP only -- number of candidate start values
-            actually tested. 0 for greedy.
+        nodes_visited: Decision points entered. For CSP solvers: recursive
+            search calls that select the next dish (the base case is not
+            counted). For greedy: dishes attempted by the placement loop.
+        attempted_assignments: Candidate start minutes tested. For CSP
+            solvers: values drawn from a working domain. For greedy: start
+            minutes scanned to find the earliest valid start (including the
+            accepted one).
 
-    Search-counter rules:
-      - If a recursive CSP search call is entered, nodes_visited += 1.
-      - Every time a value is drawn from a working domain and checked,
-        attempted_assignments += 1.
-    The same rules are applied identically to both CSP methods so the numbers
-    are comparable.
+    Search-counter rules (identical across all solvers):
+      - CSP: entering a decision node increments nodes_visited by 1. Greedy:
+        each dish attempt in the placement loop increments it by 1.
+      - Every candidate start time checked against current placements
+        increments attempted_assignments by 1.
+    The same rules are applied identically within each solver family so the
+    numbers are comparable.
     """
 
     algorithm: str
